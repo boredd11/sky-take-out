@@ -6,13 +6,11 @@ sky:
     database: sky_take_out
     username: remote_user
     password: your_password
-
   alioss:
     endpoint:
     access-key-id:
     access-key-secret:
     bucket-name:
-
   redis:
     host: 192.168.89.134
     port: 6379
