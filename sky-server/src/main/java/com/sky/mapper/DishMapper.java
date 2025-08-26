@@ -45,6 +45,22 @@ public interface DishMapper {
     @Select("select * from dish where id = #{id}")
     Dish getById(Long ids);
 
+    /**
+     * 起售或禁售菜品
+     * @param dish
+     */
     @AutoFill(value = OperationType.UPDATE)
     void update(Dish dish);
+
+    /**
+     * 根据id查询套餐
+     */
+    List<Dish> list(Dish dish);
+
+    /**
+     * 在菜品中获取相关联套餐的id
+     * @return
+     */
+    @Select("select a.* from dish a left join setmeal_dish b on a.id = b.dish_id where b.setmeal_id = #{setmealId}")
+    List<Dish> getSetmealId(Long id);
 }
