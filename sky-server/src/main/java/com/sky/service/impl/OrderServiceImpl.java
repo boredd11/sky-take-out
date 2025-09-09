@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -18,8 +19,8 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,9 @@ import org.springframework.util.CollectionUtils;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -47,6 +50,9 @@ public class OrderServiceImpl implements OrderService {
     private UserMapper userMapper;
     @Autowired
     private WeChatPayUtil weChatPayUtil;
+    @Autowired
+    private WebSocketServer webSocketServer;
+
     /**
      * 用户下单
      * @param ordersSubmitDTO
@@ -163,8 +169,15 @@ public class OrderServiceImpl implements OrderService {
                 .payStatus(Orders.PAID)
                 .checkoutTime(LocalDateTime.now())
                 .build();
-
         orderMapper.update(orders);
+
+        //根据websocket设置type,consent,orderId发给客户端
+        Map map = new HashMap<>();
+        map.put("type",1);//1 来单提醒 2 客户催单
+        map.put("orderId",ordersDB.getId());
+        map.put("consent","订单号"+outTradeNo);
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
     }
 
     /**
@@ -361,7 +374,7 @@ public class OrderServiceImpl implements OrderService {
         //获取订单id
         Orders orderDB = orderMapper.getById(ordersRejectionDTO.getId());
         //判断订单状态，只有待接单才可以拒单
-        if(orderDB.getStatus() == null && orderDB.getStatus().equals(Orders.TO_BE_CONFIRMED)){
+        if(orderDB.getStatus() == null || orderDB.getStatus().equals(Orders.TO_BE_CONFIRMED)){
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
         //拒单，退款
@@ -419,7 +432,7 @@ public class OrderServiceImpl implements OrderService {
         //获取订单id
         Orders orderDB = orderMapper.getById(id);
         //订单状态为空，订单状态不为已支付
-        if(orderDB == null && orderDB.getStatus().equals(Orders.CONFIRMED)){
+        if(orderDB == null || orderDB.getStatus().equals(Orders.CONFIRMED)){
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
 
@@ -438,7 +451,7 @@ public class OrderServiceImpl implements OrderService {
         //获取订单id
         Orders orderDB = orderMapper.getById(id);
         //判断订单状态
-        if(orderDB == null && orderDB.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)){
+        if(orderDB == null || orderDB.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)){
             throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
         }
         Orders orders = new Orders();
@@ -446,6 +459,25 @@ public class OrderServiceImpl implements OrderService {
         orders.setStatus(Orders.COMPLETED);
         orders.setDeliveryTime(LocalDateTime.now());
         orderMapper.update(orders);
+    }
+
+    /**
+     * 客户催单
+     * @param id
+     * @return
+     */
+    public void remind(Long id) {
+        //获取订单id
+        Orders orderDB = orderMapper.getById(id);
+        //判断订单状态
+        if(orderDB == null){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        Map map = new HashMap<>();
+        map.put("type",2);
+        map.put("orderId",orderDB.getId());
+        map.put("content","订单号"+orderDB.getNumber());
+        webSocketServer.sendToAllClient(JSON.toJSONString(map));
     }
 
 }

@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OrderMapper {
@@ -57,6 +58,12 @@ public interface OrderMapper {
     Orders getById(Long id);
 
     /**
+     * 营业额统计
+     * @return
+     */
+    Double sumByMap(Map map);
+
+    /**
      * 各个状态的订单数量统计
      * @return
      */
@@ -68,4 +75,12 @@ public interface OrderMapper {
      */
     @Select("select * from orders where status = #{pendingPayment} and order_time < #{time}")
     List<Orders> getStatusByOrderTimeOUt(Integer pendingPayment, LocalDateTime time);
+
+    /**
+     * 统计每天订单数量
+     * @param map
+     * @return
+     */
+    Integer countByMap(Map map);
+
 }
