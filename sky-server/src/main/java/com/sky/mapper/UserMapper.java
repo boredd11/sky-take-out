@@ -22,4 +22,5 @@ public interface UserMapper {
      * @return
      */
     Integer sumByMap(Map map);
+
 }

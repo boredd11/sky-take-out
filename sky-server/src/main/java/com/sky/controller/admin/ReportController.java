@@ -3,6 +3,7 @@ package com.sky.controller.admin;
 import com.sky.result.Result;
 import com.sky.service.ReportService;
 import com.sky.vo.OrderReportVO;
+import com.sky.vo.SalesTop10ReportVO;
 import com.sky.vo.TurnoverReportVO;
 import com.sky.vo.UserReportVO;
 import io.swagger.annotations.Api;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+
 
 @RestController
 @RequestMapping("/admin/report")
@@ -70,5 +72,22 @@ public class ReportController {
             LocalDate end){
         log.info("总订单数量，有效订单数量：{}，{}",begin,end);
         return Result.success(reportService.getOrderReportStatistics(begin,end));
+    }
+
+    /**
+     * 热销菜品Top10
+     * @param begin
+     * @param end
+     * @return
+     */
+    @GetMapping("/top10")
+    @ApiOperation("热销菜品Top10")
+    public Result<SalesTop10ReportVO> salesTop10(
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            LocalDate begin,
+            @DateTimeFormat(pattern = "yyyy-MM-dd")
+            LocalDate end){
+            log.info("菜品热销top10:{},{}",begin,end);
+            return Result.success(reportService.getSalesTop10(begin,end));
     }
 }
