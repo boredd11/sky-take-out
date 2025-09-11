@@ -9,12 +9,14 @@ import com.sky.vo.UserReportVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 
 
@@ -89,5 +91,15 @@ public class ReportController {
             LocalDate end){
             log.info("菜品热销top10:{},{}",begin,end);
             return Result.success(reportService.getSalesTop10(begin,end));
+    }
+
+    /**
+     * excel报表导出
+     * @param response
+     */
+    @GetMapping("/export")
+    @ApiOperation("excel报表导出")
+    public void export(HttpServletResponse response){
+        reportService.exportBusinessData(response);
     }
 }
